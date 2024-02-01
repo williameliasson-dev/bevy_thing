@@ -1,6 +1,14 @@
 use bevy::prelude::*;
 
-pub fn setup_test_scene(
+pub struct ScenePlugin;
+
+impl Plugin for ScenePlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, setup_test_scene);
+    }
+}
+
+fn setup_test_scene(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,

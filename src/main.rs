@@ -1,11 +1,14 @@
 use bevy::prelude::*;
+use camera::CameraPlugin;
+use player::PlayerPlugin;
+use scenes::ScenePlugin;
 
 mod camera;
+mod player;
 mod scenes;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, (scenes::setup_test_scene, camera::spawn_camera))
+        .add_plugins((DefaultPlugins, PlayerPlugin, CameraPlugin, ScenePlugin))
         .run();
 }
