@@ -1,5 +1,5 @@
 use bevy::{
-    input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
+    input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
     window::PrimaryWindow,
 };
@@ -15,6 +15,8 @@ pub struct OrbitCamera {
     pub orbit_button: MouseButton,
     pub orbit_sensitivity: f32,
     pub scroll_sensitivity: f32,
+    pub max_scroll: f32,
+    pub min_scroll: f32,
 }
 
 impl Plugin for CameraPlugin {
@@ -36,10 +38,12 @@ fn spawn_camera(mut commands: Commands) {
                 y: 2.5,
                 z: 0.0,
             },
-            radius: 5.0,
+            radius: 10.0,
             orbit_sensitivity: 300.0,
             orbit_button: MouseButton::Left,
             scroll_sensitivity: 20.0,
+            max_scroll: 20.0,
+            min_scroll: 5.0,
         },
     );
 
@@ -133,6 +137,12 @@ fn zoom_camera(
     };
 
     for scroll in mouse_scroll.read() {
+        let new_radius =
+            camera.radius - (scroll.y * camera.scroll_sensitivity * time.delta_seconds());
+
+        if new_radius <= camera.min_scroll || new_radius >= camera.max_scroll {
+            return;
+        }
         camera.radius -= scroll.y * camera.scroll_sensitivity * time.delta_seconds();
     }
 }
