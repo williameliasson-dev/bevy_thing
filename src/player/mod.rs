@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera};
+
+use crate::camera::OrbitCamera;
 
 pub struct PlayerPlugin;
 
@@ -21,10 +23,10 @@ fn player_movements(
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut player_query: Query<(&mut Transform, &Speed), With<Player>>,
-    camera_query: Query<&Transform, (With<Camera3d>, Without<Player>)>,
+    mut camera_query: Query<(&Transform, &mut OrbitCamera), (With<Camera3d>, Without<Player>)>,
 ) {
     for (mut player_transform, player_speed) in player_query.iter_mut() {
-        let camera = match camera_query.get_single() {
+        let (camera, mut orbit_camera) = match camera_query.get_single_mut() {
             Ok(camera) => camera,
             Err(error) => Err(format!("Error getting camera: {}", error)).unwrap(),
         };
@@ -52,6 +54,7 @@ fn player_movements(
         let movement = direction.normalize_or_zero() * player_speed.value * time.delta_seconds();
 
         player_transform.translation += movement;
+        orbit_camera.target = player_transform.translation;
     }
 }
 
