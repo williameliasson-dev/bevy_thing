@@ -22,7 +22,7 @@ fn setup_test_scene(
         ..default()
     };
     let floor = PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane::from_size(15.0))),
+        mesh: meshes.add(Mesh::from(shape::Plane::from_size(30.0))),
         material: materials.add(Color::GREEN.into()),
         ..default()
     };

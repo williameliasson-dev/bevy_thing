@@ -53,7 +53,6 @@ fn spawn_camera(mut commands: Commands) {
 fn sync_camera_with_player(
     player_query: Query<&Transform, With<Player>>,
     mut cam_query: Query<(&mut OrbitCamera, &mut Transform), Without<Player>>,
-    mouse: Res<Input<MouseButton>>,
 ) {
     let player_transform = match player_query.get_single() {
         Ok(transform) => transform,
@@ -70,12 +69,10 @@ fn sync_camera_with_player(
 
     orbit_camera.target = player_transform.translation;
 
-    if !mouse.pressed(orbit_camera.orbit_button) {
-        let rot_matrix = Mat3::from_quat(camera_transform.rotation);
+    let rot_matrix = Mat3::from_quat(camera_transform.rotation);
 
-        camera_transform.translation =
-            orbit_camera.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, orbit_camera.radius));
-    }
+    camera_transform.translation =
+        orbit_camera.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, orbit_camera.radius));
 }
 
 fn orbit_mouse(
@@ -121,9 +118,6 @@ fn orbit_mouse(
             cam_transform.rotation = new_rotation;
         }
     }
-
-    let rot_matrix = Mat3::from_quat(cam_transform.rotation);
-    cam_transform.translation = cam.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, cam.radius));
 }
 
 fn zoom_camera(
