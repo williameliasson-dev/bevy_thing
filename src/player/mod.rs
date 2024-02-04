@@ -12,7 +12,7 @@ impl Plugin for PlayerPlugin {
 }
 
 #[derive(Component)]
-struct Player;
+pub struct Player;
 
 #[derive(Component)]
 struct Speed {
@@ -54,7 +54,6 @@ fn player_movements(
         let movement = direction.normalize_or_zero() * player_speed.value * time.delta_seconds();
 
         player_transform.translation += movement;
-        orbit_camera.target = player_transform.translation;
     }
 }
 

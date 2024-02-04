@@ -1,5 +1,7 @@
 use bevy::{input::mouse::MouseMotion, prelude::*, window::PrimaryWindow};
 use std::f32::consts::PI;
+
+use crate::player::Player;
 pub struct CameraPlugin;
 
 #[derive(Component)]
@@ -14,6 +16,7 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera);
         app.add_systems(Update, orbit_mouse);
+        app.add_systems(Update, sync_camera_with_player);
     }
 }
 
@@ -36,6 +39,36 @@ fn spawn_camera(mut commands: Commands) {
     );
 
     commands.spawn(camera);
+}
+
+fn sync_camera_with_player(
+    player_query: Query<&Transform, With<Player>>,
+    mut cam_query: Query<(&mut OrbitCamera, &mut Transform), Without<Player>>,
+    mouse: Res<Input<MouseButton>>,
+) {
+    let player_transform = match player_query.get_single() {
+        Ok(transform) => transform,
+        Err(error) => Err(format!("Error getting player transform: {}", error)).unwrap(),
+    };
+
+    let camera = match cam_query.get_single_mut() {
+        Ok(camera) => camera,
+        Err(error) => Err(format!("Error getting player camera: {}", error)).unwrap(),
+    };
+
+    let mut orbit_camera = camera.0;
+    let mut camera_transform = camera.1;
+
+    orbit_camera.target = player_transform.translation;
+
+    if mouse.pressed(orbit_camera.orbit_button) {
+        return;
+    }
+
+    let rot_matrix = Mat3::from_quat(camera_transform.rotation);
+
+    camera_transform.translation =
+        orbit_camera.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, orbit_camera.radius));
 }
 
 fn orbit_mouse(
