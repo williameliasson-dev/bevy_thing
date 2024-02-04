@@ -1,4 +1,8 @@
-use bevy::{input::mouse::MouseMotion, prelude::*, window::PrimaryWindow};
+use bevy::{
+    input::mouse::{MouseMotion, MouseScrollUnit, MouseWheel},
+    prelude::*,
+    window::PrimaryWindow,
+};
 use std::f32::consts::PI;
 
 use crate::player::Player;
@@ -7,16 +11,16 @@ pub struct CameraPlugin;
 #[derive(Component)]
 pub struct OrbitCamera {
     pub radius: f32,
-    pub sensitivity: f32,
     pub target: Vec3,
     pub orbit_button: MouseButton,
+    pub orbit_sensitivity: f32,
+    pub scroll_sensitivity: f32,
 }
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_camera);
-        app.add_systems(Update, orbit_mouse);
-        app.add_systems(Update, sync_camera_with_player);
+        app.add_systems(Startup, spawn_camera)
+            .add_systems(Update, (orbit_mouse, sync_camera_with_player, zoom_camera));
     }
 }
 
@@ -32,9 +36,10 @@ fn spawn_camera(mut commands: Commands) {
                 y: 2.5,
                 z: 0.0,
             },
-            radius: 10.0,
-            sensitivity: 300.0,
+            radius: 5.0,
+            orbit_sensitivity: 300.0,
             orbit_button: MouseButton::Left,
+            scroll_sensitivity: 20.0,
         },
     );
 
@@ -59,10 +64,6 @@ fn sync_camera_with_player(
     let mut orbit_camera = camera.0;
     let mut camera_transform = camera.1;
 
-    if mouse.just_pressed(orbit_camera.orbit_button) {
-        camera_transform.translation = orbit_camera.target;
-    }
-
     orbit_camera.target = player_transform.translation;
 
     if !mouse.pressed(orbit_camera.orbit_button) {
@@ -75,7 +76,7 @@ fn sync_camera_with_player(
 
 fn orbit_mouse(
     window_q: Query<&Window, With<PrimaryWindow>>,
-    mut cam_q: Query<(&OrbitCamera, &mut Transform), With<OrbitCamera>>,
+    mut cam_query: Query<(&OrbitCamera, &mut Transform), With<OrbitCamera>>,
     mouse: Res<Input<MouseButton>>,
     mut mouse_evr: EventReader<MouseMotion>,
     time: Res<Time>,
@@ -85,7 +86,7 @@ fn orbit_mouse(
         rotation = ev.delta
     }
 
-    let Ok((cam, mut cam_transform)) = cam_q.get_single_mut() else {
+    let Ok((cam, mut cam_transform)) = cam_query.get_single_mut() else {
         return;
     };
 
@@ -93,7 +94,7 @@ fn orbit_mouse(
         return;
     }
 
-    rotation *= cam.sensitivity * time.delta_seconds();
+    rotation *= cam.orbit_sensitivity * time.delta_seconds();
 
     if rotation.length_squared() > 0.0 {
         let window = window_q.get_single().unwrap();
@@ -119,4 +120,19 @@ fn orbit_mouse(
 
     let rot_matrix = Mat3::from_quat(cam_transform.rotation);
     cam_transform.translation = cam.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, cam.radius));
+}
+
+fn zoom_camera(
+    mut cam_query: Query<&mut OrbitCamera, With<Camera3d>>,
+    mut mouse_scroll: EventReader<MouseWheel>,
+    time: Res<Time>,
+) {
+    let mut camera = match cam_query.get_single_mut() {
+        Ok(camera) => camera,
+        Err(error) => Err(format!("Error getting camera: {}", error)).unwrap(),
+    };
+
+    for scroll in mouse_scroll.read() {
+        camera.radius -= scroll.y * camera.scroll_sensitivity * time.delta_seconds();
+    }
 }

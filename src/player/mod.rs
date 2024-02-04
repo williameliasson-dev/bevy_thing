@@ -23,10 +23,10 @@ fn player_movements(
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut player_query: Query<(&mut Transform, &Speed), With<Player>>,
-    mut camera_query: Query<(&Transform, &mut OrbitCamera), (With<Camera3d>, Without<Player>)>,
+    mut camera_query: Query<&Transform, (With<Camera3d>, Without<Player>)>,
 ) {
     for (mut player_transform, player_speed) in player_query.iter_mut() {
-        let (camera, mut orbit_camera) = match camera_query.get_single_mut() {
+        let camera = match camera_query.get_single_mut() {
             Ok(camera) => camera,
             Err(error) => Err(format!("Error getting camera: {}", error)).unwrap(),
         };
