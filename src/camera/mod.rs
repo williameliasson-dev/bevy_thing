@@ -33,7 +33,7 @@ fn spawn_camera(mut commands: Commands) {
                 z: 0.0,
             },
             radius: 10.0,
-            sensitivity: 2.0,
+            sensitivity: 300.0,
             orbit_button: MouseButton::Left,
         },
     );
@@ -59,16 +59,18 @@ fn sync_camera_with_player(
     let mut orbit_camera = camera.0;
     let mut camera_transform = camera.1;
 
-    orbit_camera.target = player_transform.translation;
-
-    if mouse.pressed(orbit_camera.orbit_button) {
-        return;
+    if mouse.just_pressed(orbit_camera.orbit_button) {
+        camera_transform.translation = orbit_camera.target;
     }
 
-    let rot_matrix = Mat3::from_quat(camera_transform.rotation);
+    orbit_camera.target = player_transform.translation;
 
-    camera_transform.translation =
-        orbit_camera.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, orbit_camera.radius));
+    if !mouse.pressed(orbit_camera.orbit_button) {
+        let rot_matrix = Mat3::from_quat(camera_transform.rotation);
+
+        camera_transform.translation =
+            orbit_camera.target + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, orbit_camera.radius));
+    }
 }
 
 fn orbit_mouse(
@@ -76,10 +78,11 @@ fn orbit_mouse(
     mut cam_q: Query<(&OrbitCamera, &mut Transform), With<OrbitCamera>>,
     mouse: Res<Input<MouseButton>>,
     mut mouse_evr: EventReader<MouseMotion>,
+    time: Res<Time>,
 ) {
     let mut rotation = Vec2::ZERO;
     for ev in mouse_evr.read() {
-        rotation = ev.delta;
+        rotation = ev.delta
     }
 
     let Ok((cam, mut cam_transform)) = cam_q.get_single_mut() else {
@@ -90,7 +93,7 @@ fn orbit_mouse(
         return;
     }
 
-    rotation *= cam.sensitivity;
+    rotation *= cam.sensitivity * time.delta_seconds();
 
     if rotation.length_squared() > 0.0 {
         let window = window_q.get_single().unwrap();
