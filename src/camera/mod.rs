@@ -19,6 +19,24 @@ pub struct OrbitCamera {
     pub min_scroll: f32,
 }
 
+impl OrbitCamera {
+    fn default() -> Self {
+        Self {
+            target: Vec3 {
+                x: 0.0,
+                y: 2.5,
+                z: 0.0,
+            },
+            radius: 10.0,
+            orbit_sensitivity: 300.0,
+            orbit_button: MouseButton::Left,
+            scroll_sensitivity: 20.0,
+            max_scroll: 20.0,
+            min_scroll: 5.0,
+        }
+    }
+}
+
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera)
@@ -32,19 +50,7 @@ fn spawn_camera(mut commands: Commands) {
             transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
-        OrbitCamera {
-            target: Vec3 {
-                x: 0.0,
-                y: 2.5,
-                z: 0.0,
-            },
-            radius: 10.0,
-            orbit_sensitivity: 300.0,
-            orbit_button: MouseButton::Left,
-            scroll_sensitivity: 20.0,
-            max_scroll: 20.0,
-            min_scroll: 5.0,
-        },
+        OrbitCamera::default(),
     );
 
     commands.spawn(camera);
